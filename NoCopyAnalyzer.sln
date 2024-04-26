@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoCopyAnalyzer", "NoCopyAnalyzer\NoCopyAnalyzer\NoCopyAnalyzer.csproj", "{10F31ABE-5CDE-43EF-8FB6-D0C156353238}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoCopyAnalyzer.Sample", "NoCopyAnalyzer\NoCopyAnalyzer.Sample\NoCopyAnalyzer.Sample.csproj", "{3212B138-AEBC-4718-B9DA-270B9E4632E1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{10F31ABE-5CDE-43EF-8FB6-D0C156353238}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10F31ABE-5CDE-43EF-8FB6-D0C156353238}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10F31ABE-5CDE-43EF-8FB6-D0C156353238}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10F31ABE-5CDE-43EF-8FB6-D0C156353238}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3212B138-AEBC-4718-B9DA-270B9E4632E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3212B138-AEBC-4718-B9DA-270B9E4632E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3212B138-AEBC-4718-B9DA-270B9E4632E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3212B138-AEBC-4718-B9DA-270B9E4632E1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
