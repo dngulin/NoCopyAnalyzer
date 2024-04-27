@@ -90,7 +90,7 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
         if (sym.RefKind != RefKind.None)
             return;
 
-        if (!IsNonCopyType(sym.Type))
+        if (!IsNoCopyType(sym.Type))
             return;
 
         ctx.ReportDiagnostic(Diagnostic.Create(ParameterRule, sym.Locations.First(), sym.Type.Name));
@@ -103,7 +103,7 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
             return;
 
         var t = op.Value.Type;
-        if (t == null || !IsNonCopyType(t))
+        if (t == null || !IsNoCopyType(t))
             return;
 
         ctx.ReportDiagnostic(Diagnostic.Create(ArgumentRule, op.Value.Syntax.GetLocation(), t.Name));
@@ -115,7 +115,7 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
         if (sym.Type.TypeKind != TypeKind.Struct || sym.ContainingType.TypeKind != TypeKind.Struct)
             return;
 
-        if (!IsNonCopyType(sym.Type) || IsNonCopyType(sym.ContainingType))
+        if (!IsNoCopyType(sym.Type) || IsNoCopyType(sym.ContainingType))
             return;
 
         ctx.ReportDiagnostic(Diagnostic.Create(FieldRule, sym.Locations.First(), sym.Type.Name));
@@ -131,13 +131,13 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
             return;
 
         var boxing = typeFrom.IsValueType && typeTo.IsReferenceType;
-        if (boxing && IsNonCopyType(typeFrom))
+        if (boxing && IsNoCopyType(typeFrom))
         {
             ctx.ReportDiagnostic(Diagnostic.Create(BoxingRule, op.Syntax.GetLocation(), typeFrom.Name));
         }
 
         var unboxing = typeFrom.IsReferenceType && typeTo.IsValueType;
-        if (unboxing && IsNonCopyType(typeTo))
+        if (unboxing && IsNoCopyType(typeTo))
         {
             ctx.ReportDiagnostic(Diagnostic.Create(BoxingRule, op.Syntax.GetLocation(), typeFrom.Name));
         }
@@ -151,7 +151,7 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
         foreach (var capture in capturedVariables)
         {
             var t = GetCaptureSymbolType(capture);
-            if (t != null && IsNonCopyType(t))
+            if (t != null && IsNoCopyType(t))
                 ctx.ReportDiagnostic(Diagnostic.Create(CaptureRule, capture.Locations.First(), t.Name));
         }
     }
@@ -162,7 +162,7 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
         if (method.ReturnsByRef || method.ReturnsByRefReadonly)
             return;
 
-        if (!IsNonCopyType(method.ReturnType))
+        if (!IsNoCopyType(method.ReturnType))
             return;
 
         ctx.ReportDiagnostic(Diagnostic.Create(ReturnRule, method.Locations.First(), method.ReturnType.Name));
@@ -173,7 +173,7 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
         var initializer = (IFieldInitializerOperation)ctx.Operation;
         var v = initializer.Value;
 
-        if (IsNotExistingValue(v) || v.Type == null || !IsNonCopyType(v.Type))
+        if (IsNotExistingValue(v) || v.Type == null || !IsNoCopyType(v.Type))
             return;
 
         ctx.ReportDiagnostic(Diagnostic.Create(AssignmentRule, initializer.Syntax.GetLocation(), v.Type.Name));
@@ -190,7 +190,7 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
             return;
 
         var v = initializer.Value;
-        if (IsNotExistingValue(v) || v.Type == null || !IsNonCopyType(v.Type))
+        if (IsNotExistingValue(v) || v.Type == null || !IsNoCopyType(v.Type))
             return;
 
         ctx.ReportDiagnostic(Diagnostic.Create(AssignmentRule, declarator.Syntax.GetLocation(), v.Type.Name));
@@ -204,18 +204,18 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
         if (assignment.IsRef)
             return;
 
-        if (IsNotExistingValue(v) || v.Type == null || !IsNonCopyType(v.Type))
+        if (IsNotExistingValue(v) || v.Type == null || !IsNoCopyType(v.Type))
             return;
 
         ctx.ReportDiagnostic(Diagnostic.Create(AssignmentRule, assignment.Syntax.GetLocation(), v.Type.Name));
     }
 
-    private static bool IsNonCopyType(ITypeSymbol t)
+    private static bool IsNoCopyType(ITypeSymbol t)
     {
-        return t.TypeKind == TypeKind.Struct && t.GetAttributes().Any(IsNonCopyAttribute);
+        return t.TypeKind == TypeKind.Struct && t.GetAttributes().Any(IsNoCopyAttribute);
     }
 
-    private static bool IsNonCopyAttribute(AttributeData a)
+    private static bool IsNoCopyAttribute(AttributeData a)
     {
         var name = a.AttributeClass?.Name;
         if (name == null)
