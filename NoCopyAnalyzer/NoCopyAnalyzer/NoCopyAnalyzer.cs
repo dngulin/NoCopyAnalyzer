@@ -120,13 +120,17 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
         if (typeFrom == null || typeTo == null)
             return;
 
-        if (typeFrom.TypeKind != TypeKind.Struct || !typeTo.IsReferenceType)
-            return;
+        var boxing = typeFrom.IsValueType && typeTo.IsReferenceType;
+        if (boxing && IsNonCopyType(typeFrom))
+        {
+            ctx.ReportDiagnostic(Diagnostic.Create(BoxingRule, op.Syntax.GetLocation(), typeFrom.Name));
+        }
 
-        if (!IsNonCopyType(typeFrom))
-            return;
-
-        ctx.ReportDiagnostic(Diagnostic.Create(BoxingRule, op.Operand.Syntax.GetLocation(), typeFrom.Name));
+        var unboxing = typeFrom.IsReferenceType && typeTo.IsValueType;
+        if (unboxing && IsNonCopyType(typeTo))
+        {
+            ctx.ReportDiagnostic(Diagnostic.Create(BoxingRule, op.Syntax.GetLocation(), typeFrom.Name));
+        }
     }
 
     private static void AnalyzeCaptures(SyntaxNodeAnalysisContext ctx)

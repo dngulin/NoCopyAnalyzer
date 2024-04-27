@@ -36,8 +36,9 @@ public static class Examples
         return s;
     }
 
-    public static void ReceiveAsObject(object _)
+    public static void ReceiveAsObject(object argument)
     {
+        Property = (SampleStruct)argument;
     }
 
     public static void ReceiveAsInterface(ISampleInterface _)
