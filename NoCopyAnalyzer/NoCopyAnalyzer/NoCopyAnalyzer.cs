@@ -46,18 +46,25 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
         6, "Returned by Value", "Type `{0}` is marked as `NoCopy` and shouldn't be returned by value"
     );
 
+    private static readonly DiagnosticDescriptor AssignmentRule = Rule(
+        6, "Copied by Assignment", "Type `{0}` is marked as `NoCopy` and shouldn't be assigned by copying other value"
+    );
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         ParameterRule,
         ArgumentRule,
         FieldRule,
         BoxingRule,
         CaptureRule,
-        ReturnRule
+        ReturnRule,
+        AssignmentRule
     );
 
     public override void Initialize(AnalysisContext context)
     {
-        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
+        context.ConfigureGeneratedCodeAnalysis(
+            GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics
+        );
         context.EnableConcurrentExecution();
 
         context.RegisterSymbolAction(AnalyzeParameter, SymbolKind.Parameter);
@@ -72,6 +79,9 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
             SyntaxKind.LocalFunctionStatement
         );
         context.RegisterSymbolAction(AnalyzeReturn, SymbolKind.Method);
+        context.RegisterOperationAction(AnalyzeFieldInitializer, OperationKind.FieldInitializer);
+        context.RegisterOperationAction(AnalyzeVariableDeclarator, OperationKind.VariableDeclarator);
+        context.RegisterOperationAction(AnalyzeAssignment, OperationKind.SimpleAssignment);
     }
 
     private static void AnalyzeParameter(SymbolAnalysisContext ctx)
@@ -158,6 +168,48 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
         ctx.ReportDiagnostic(Diagnostic.Create(ReturnRule, method.Locations.First(), method.ReturnType.Name));
     }
 
+    private static void AnalyzeFieldInitializer(OperationAnalysisContext ctx)
+    {
+        var initializer = (IFieldInitializerOperation)ctx.Operation;
+        var v = initializer.Value;
+
+        if (IsNotExistingValue(v) || v.Type == null || !IsNonCopyType(v.Type))
+            return;
+
+        ctx.ReportDiagnostic(Diagnostic.Create(AssignmentRule, initializer.Syntax.GetLocation(), v.Type.Name));
+    }
+
+    private static void AnalyzeVariableDeclarator(OperationAnalysisContext ctx)
+    {
+        var declarator = (IVariableDeclaratorOperation)ctx.Operation;
+        if (declarator.Symbol.IsRef)
+            return;
+
+        var initializer = declarator.Initializer;
+        if (initializer == null)
+            return;
+
+        var v = initializer.Value;
+        if (IsNotExistingValue(v) || v.Type == null || !IsNonCopyType(v.Type))
+            return;
+
+        ctx.ReportDiagnostic(Diagnostic.Create(AssignmentRule, declarator.Syntax.GetLocation(), v.Type.Name));
+    }
+
+    private static void AnalyzeAssignment(OperationAnalysisContext ctx)
+    {
+        var assignment = (ISimpleAssignmentOperation)ctx.Operation;
+        var v = assignment.Value;
+
+        if (assignment.IsRef)
+            return;
+
+        if (IsNotExistingValue(v) || v.Type == null || !IsNonCopyType(v.Type))
+            return;
+
+        ctx.ReportDiagnostic(Diagnostic.Create(AssignmentRule, assignment.Syntax.GetLocation(), v.Type.Name));
+    }
+
     private static bool IsNonCopyType(ITypeSymbol t)
     {
         return t.TypeKind == TypeKind.Struct && t.GetAttributes().Any(IsNonCopyAttribute);
@@ -180,5 +232,28 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
             SymbolKind.Parameter => ((IParameterSymbol)symbol).Type,
             _ => null
         };
+    }
+
+    private static bool IsNotExistingValue(IOperation operation)
+    {
+        while (true)
+        {
+            switch (operation.Kind)
+            {
+                case OperationKind.DefaultValue:
+                case OperationKind.ObjectCreation:
+                    return true;
+
+                case OperationKind.Conversion:
+                {
+                    var conversion = (IConversionOperation)operation;
+                    operation = conversion.Operand;
+                    continue;
+                }
+
+                default:
+                    return false;
+            }
+        }
     }
 }

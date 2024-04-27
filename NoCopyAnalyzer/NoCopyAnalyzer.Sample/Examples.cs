@@ -25,24 +25,40 @@ public static class Examples
         ReceiveAsObject(new SampleStruct());
         ReceiveAsInterface(new SampleStruct());
 
-        var s = new SampleStruct();
-        var localCapture = () => { ReceiveByValue(s); };
+        var s1 = new SampleStruct();
 
+        var s2 = s1;
+        s1 = s2;
+
+        var localCapture = () => { ReceiveByValue(s1); };
         var parameterCapture = () => ReceiveByValue(argument);
     }
 
     public static SampleStruct ReceiveByValue(SampleStruct s)
     {
+        ref var r1 = ref s;
+
+        var s2 = new SampleStruct();
+        r1 = ref s2;
+
         return s;
     }
 
     public static void ReceiveAsObject(object argument)
     {
         Property = (SampleStruct)argument;
+        Property = new SampleStruct();
+        Property = default(SampleStruct);
+        Property = default;
     }
 
     public static void ReceiveAsInterface(ISampleInterface _)
     {
+    }
+
+    public static void ReturnAsOut(out SampleStruct result)
+    {
+        result = default;
     }
 
     public static SampleStruct Property { get; set; }
