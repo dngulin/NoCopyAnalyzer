@@ -165,6 +165,9 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
         if (!IsNoCopyType(method.ReturnType))
             return;
 
+        if (IsNoCopyInstanceConstructor(method))
+            return;
+
         ctx.ReportDiagnostic(Diagnostic.Create(ReturnRule, method.Locations.First(), method.ReturnType.Name));
     }
 
@@ -251,9 +254,29 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
                     continue;
                 }
 
+                case OperationKind.Invocation:
+                {
+                    var invocation = (IInvocationOperation)operation;
+                    return IsNoCopyInstanceConstructor(invocation.TargetMethod);
+                }
+
                 default:
                     return false;
             }
         }
+    }
+
+    private static bool IsNoCopyInstanceConstructor(IMethodSymbol method)
+    {
+        return method.IsStatic && method.GetAttributes().Any(IsNoCopyInstanceConstructorAttribute);
+    }
+
+    private static bool IsNoCopyInstanceConstructorAttribute(AttributeData a)
+    {
+        var name = a.AttributeClass?.Name;
+        if (name == null)
+            return false;
+
+        return name.EndsWith("NoCopyInstanceConstructorAttribute") || name.EndsWith("NoCopyInstanceConstructor");
     }
 }

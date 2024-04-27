@@ -34,14 +34,12 @@ public static class Examples
         var parameterCapture = () => ReceiveByValue(argument);
     }
 
-    public static SampleStruct ReceiveByValue(SampleStruct s)
+    public static void ReceiveByValue(SampleStruct s)
     {
         ref var r1 = ref s;
 
-        var s2 = new SampleStruct();
+        var s2 = Create2();
         r1 = ref s2;
-
-        return s;
     }
 
     public static void ReceiveAsObject(object argument)
@@ -62,10 +60,20 @@ public static class Examples
     }
 
     public static SampleStruct Property { get; set; }
+
+    public static SampleStruct Create1() => default;
+
+    [NoCopyInstanceConstructor]
+    public static SampleStruct Create2() => default;
 }
 
 [AttributeUsage(AttributeTargets.Struct)]
 public class NoCopyAttribute : Attribute
+{
+}
+
+[AttributeUsage(AttributeTargets.Method)]
+public class NoCopyInstanceConstructorAttribute : Attribute
 {
 }
 
