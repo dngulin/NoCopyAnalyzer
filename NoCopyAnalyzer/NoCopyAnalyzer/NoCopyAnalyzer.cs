@@ -42,12 +42,17 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
         5, "Captured by Closure", "Type `{0}` is marked as `NoCopy` and shouldn't be captured by a closure"
     );
 
+    private static readonly DiagnosticDescriptor ReturnRule = Rule(
+        6, "Returned by Value", "Type `{0}` is marked as `NoCopy` and shouldn't be returned by value"
+    );
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
         ParameterRule,
         ArgumentRule,
         FieldRule,
         BoxingRule,
-        CaptureRule
+        CaptureRule,
+        ReturnRule
     );
 
     public override void Initialize(AnalysisContext context)
@@ -66,6 +71,7 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
             SyntaxKind.ParenthesizedLambdaExpression,
             SyntaxKind.LocalFunctionStatement
         );
+        context.RegisterSymbolAction(AnalyzeReturn, SymbolKind.Method);
     }
 
     private static void AnalyzeParameter(SymbolAnalysisContext ctx)
@@ -134,6 +140,18 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
             if (t != null && IsNonCopyType(t))
                 ctx.ReportDiagnostic(Diagnostic.Create(CaptureRule, capture.Locations.First(), t.Name));
         }
+    }
+
+    private static void AnalyzeReturn(SymbolAnalysisContext ctx)
+    {
+        var method = (IMethodSymbol)ctx.Symbol;
+        if (method.ReturnsByRef || method.ReturnsByRefReadonly)
+            return;
+
+        if (!IsNonCopyType(method.ReturnType))
+            return;
+
+        ctx.ReportDiagnostic(Diagnostic.Create(ReturnRule, method.Locations.First(), method.ReturnType.Name));
     }
 
     private static bool IsNonCopyType(ITypeSymbol t)

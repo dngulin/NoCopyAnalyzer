@@ -31,8 +31,9 @@ public static class Examples
         var parameterCapture = () => ReceiveByValue(argument);
     }
 
-    public static void ReceiveByValue(SampleStruct _)
+    public static SampleStruct ReceiveByValue(SampleStruct s)
     {
+        return s;
     }
 
     public static void ReceiveAsObject(object _)
@@ -42,6 +43,8 @@ public static class Examples
     public static void ReceiveAsInterface(ISampleInterface _)
     {
     }
+
+    public static SampleStruct Property { get; set; }
 }
 
 [AttributeUsage(AttributeTargets.Struct)]
