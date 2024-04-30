@@ -268,7 +268,7 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
 
     private static bool IsNoCopyInstanceConstructor(IMethodSymbol method)
     {
-        return method.IsStatic && method.GetAttributes().Any(IsNoCopyInstanceConstructorAttribute);
+        return method.GetAttributes().Any(IsNoCopyInstanceConstructorAttribute);
     }
 
     private static bool IsNoCopyInstanceConstructorAttribute(AttributeData a)
