@@ -165,7 +165,7 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
         if (!IsNoCopyType(method.ReturnType))
             return;
 
-        if (IsNoCopyInstanceConstructor(method))
+        if (IsNoCopyReturnMethod(method))
             return;
 
         ctx.ReportDiagnostic(Diagnostic.Create(ReturnRule, method.Locations.First(), method.ReturnType.Name));
@@ -257,7 +257,7 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
                 case OperationKind.Invocation:
                 {
                     var invocation = (IInvocationOperation)operation;
-                    return IsNoCopyInstanceConstructor(invocation.TargetMethod);
+                    return IsNoCopyReturnMethod(invocation.TargetMethod);
                 }
 
                 default:
@@ -266,17 +266,17 @@ public class NoCopyAnalyzer : DiagnosticAnalyzer
         }
     }
 
-    private static bool IsNoCopyInstanceConstructor(IMethodSymbol method)
+    private static bool IsNoCopyReturnMethod(IMethodSymbol method)
     {
-        return method.GetAttributes().Any(IsNoCopyInstanceConstructorAttribute);
+        return method.GetAttributes().Any(IsNoCopyReturnAttribute);
     }
 
-    private static bool IsNoCopyInstanceConstructorAttribute(AttributeData a)
+    private static bool IsNoCopyReturnAttribute(AttributeData a)
     {
         var name = a.AttributeClass?.Name;
         if (name == null)
             return false;
 
-        return name.EndsWith("NoCopyInstanceConstructorAttribute") || name.EndsWith("NoCopyInstanceConstructor");
+        return name.EndsWith("NoCopyReturnAttribute") || name.EndsWith("NoCopyReturn");
     }
 }
